@@ -1,11 +1,11 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const dbConfig = require("./app/config/db.config");
 
 const app = express();
 
 var corsOptions = {
-  origin: "http://localhost:8081"
+  origin: "http://localhost:3001"
 };
 
 app.use(cors(corsOptions));
@@ -20,7 +20,7 @@ const db = require("./app/models");
 const Role = db.role;
 
 db.mongoose
-  .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
+  .connect(process.env.DBCONFIG, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
@@ -43,7 +43,7 @@ require("./app/routes/auth.routes")(app);
 require("./app/routes/user.routes")(app);
 
 // set port, listen for requests
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
