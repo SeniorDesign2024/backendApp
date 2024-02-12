@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-
+const cookieSession = require('express-session')
 const app = express();
 
 var corsOptions = {
@@ -17,6 +17,19 @@ app.set('trust proxy', 1)
 
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  cookieSession({
+    name: "bezkoder-session",
+    secret: "COOKIE_SECRET", // should use as secret environment variable
+    cookie: {
+      maxAge: 86400000, // 24 hours
+      secure: false, // Requires HTTPS
+      httpOnly: true, // Can't be accessed via JavaScript
+      sameSite: 'strict', // Recommended for CSRF protection
+    }
+  })
+);
 
 const db = require("./app/models");
 const Role = db.role;
