@@ -4,7 +4,7 @@ const User = db.user;
 const Role = db.role;
 const Event = db.event;
 
-const Event = require("../models/event.model");
+// const Event = require("../models/event.model");
 
 
 exports.test = (req, res) => {
