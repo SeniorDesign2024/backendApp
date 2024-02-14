@@ -41,6 +41,7 @@ exports.processEvent = async(req, res) => {
   res.status(200).json({
     attendance: rv
   })
+}
 
   exports.createEvent = (req, res) => {
     console.log("Entered createEvent function in Event controller");
