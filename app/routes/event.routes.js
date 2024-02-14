@@ -14,4 +14,9 @@ module.exports = function(app) {
   app.get("/api/event/test", controller.test);
   app.get("/api/event/next-event", [authJwt.verifyToken], controller.nextEvent);
   app.post("/api/event/process-event", [authJwt.verifyToken], controller.processEvent)
+  
+  app.post("/api/event/create-event", [authJwt.verifyToken], controller.createEvent)
+  app.get("/api/event/list-events", [authJwt.verifyToken], controller.listEvents)
+  app.post("/api/event/event-details", [authJwt.verifyToken], controller.eventDetails)
+  app.post("/api/event/update-event", [authJwt.verifyToken], controller.updateEvent)
 };
