@@ -51,6 +51,11 @@ exports.processEvent = async(req, res) => {
 
     // Extract details from request body
     const { name, startTime, endTime, complianceLimit, attendance } = req.body;
+    console.log(name);
+    console.log(startTime);
+    console.log(endTime);
+    console.log(complianceLimit);
+    console.log(attendance);
   
     // Check if all required fields are provided
     if (!name || !startTime || !endTime || !complianceLimit || !attendance) {

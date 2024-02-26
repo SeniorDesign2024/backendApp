@@ -113,3 +113,59 @@ exports.signin = (req, res) => {
       });
     });
 };
+
+exports.resetPassword = (req, res) => {
+  console.log("Entered resetPassword function in auth controller");
+  // Validate req.body
+  if (!req.body.oldPassword || !req.body.newPassword) {
+    console.log("Both old password and new password are required.");
+    return res.status(400).send({ error: "Both old password and new password are required." });
+  }
+
+  // Confirm old password
+  User.findById(req.userId, (err, user) => {
+    if (err) {
+      return res.status(500).send({ error: err.message });
+    }
+
+    if (!user) {
+      console.log("User not found.");
+      return res.status(404).send({ error: "User not found." });
+    }
+
+    var passwordIsValid = bcrypt.compareSync(req.body.oldPassword, user.password);
+    if (!passwordIsValid) {
+      console.log("Invalid old password.");
+      return res.status(400).send({ error: "Invalid old password." });
+    }
+
+    // Store the new password
+    user.password = bcrypt.hashSync(req.body.newPassword, 8);
+    user.save((err, user) => {
+      if (err) {
+        return res.status(500).send({ error: err.message });
+      }
+
+      // Create token and store it in the session
+      const token = jwt.sign({ id: user.id }, config.secret, {
+        algorithm: 'HS256',
+        allowInsecureKeySizes: true,
+        expiresIn: 86400 // 24 hours
+      });
+
+      var authorities = [];
+      for (let i = 0; i < user.roles.length; i++) {
+        if (user.roles[i].name) {
+        authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
+      }
+    }
+      req.session.token = token;
+
+      res.status(200).send({
+        message: "Password reset successfully.",
+        accessToken: token
+      });
+    });
+  });
+};
+
