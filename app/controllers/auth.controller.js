@@ -114,6 +114,11 @@ exports.signin = (req, res) => {
     });
 };
 
+exports.logout = (req, res) => {
+  req.session.token = null; // Clear the session token
+  res.status(200).send({ message: "Logout successful" }); // Send a response
+}
+
 exports.resetPassword = (req, res) => {
   console.log("Entered resetPassword function in auth controller");
   // Validate req.body
