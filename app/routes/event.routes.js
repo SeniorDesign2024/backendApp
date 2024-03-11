@@ -11,7 +11,7 @@ module.exports = function(app) {
     next();
   });
 
-  app.get("/api/event/test", controller.test);
+  app.get("/api/event/test", [authJwt.verifyToken], controller.test);
   app.get("/api/event/next-event", [authJwt.verifyToken], controller.nextEvent);
   app.post("/api/event/process-event", [authJwt.verifyToken], controller.processEvent)
   
