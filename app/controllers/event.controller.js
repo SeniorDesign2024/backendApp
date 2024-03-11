@@ -1,23 +1,18 @@
-
 const db = require("../models");
 const User = db.user;
 const Role = db.role;
 const Event = db.event;
-
-// const Event = require("../models/event.model");
-
+const axios = require('axios')
+const http = require('http')
 
 exports.test = (req, res) => {
   console.log("hello")
   res.json({message: "Event Test"});
 };
 
-
 exports.nextEvent = async (req, res) => {
   retrived_user = req.userId
   try {
-    //const user = await User.findOne({username: retrived_user}).exec()
-    //const curUserId = user._id;
     const eventList = await Event.findOne({userId: retrived_user}).sort('startTime').exec()
     console.log(eventList);
     if (eventList) {
@@ -37,11 +32,42 @@ exports.nextEvent = async (req, res) => {
 }
 
 exports.processEvent = async(req, res) => {
-  rv = Math.floor(Math.random() * 1000);
-  res.status(200).json({
-    attendance: rv
-  })
-};
+  const eventId = req.body.event_id;
+  const imageData = req.body.image;
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  try {
+    if (!eventId) {
+      throw new Error("No Event Id provided.");
+    }
+    if (!imageData) {
+      throw new Error("No Image provided.");
+    }
+
+    const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData }, config);
+    const count = response.data.count;
+    if (count) {
+      const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
+      //console.log(addCount);
+    }
+    
+    res.status(200).json({
+      "message": "success"
+    });
+
+  } catch (err) {
+    //console.error("Error:", err.message);
+    res.status(500).json({
+      "error": err.message
+    });
+  }
+}
+
   exports.createEvent = (req, res) => {
     console.log("Entered createEvent function in Event controller");
 
