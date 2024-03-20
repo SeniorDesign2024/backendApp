@@ -2,7 +2,7 @@ const { authJwt } = require("../middlewares");
 const controller = require("../controllers/event.controller");
 const { verifyToken } = require("../middlewares/authJwt");
 
-module.exports = function(app) {
+module.exports = function(app, io) {
   app.use(function(req, res, next) {
     res.header(
       "Access-Control-Allow-Headers",
@@ -13,7 +13,7 @@ module.exports = function(app) {
 
   app.get("/api/event/test", [authJwt.verifyToken], controller.test);
   app.get("/api/event/next-event", [authJwt.verifyToken], controller.nextEvent);
-  app.post("/api/event/process-event", [authJwt.verifyToken], controller.processEvent)
+  app.post("/api/event/process-event", [authJwt.verifyToken], controller.processEvent(io))
   
   app.post("/api/event/create-event", [authJwt.verifyToken], controller.createEvent)
   app.get("/api/event/list-events", [authJwt.verifyToken], controller.listEvents)
