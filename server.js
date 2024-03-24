@@ -13,7 +13,9 @@ var corsOptions = {
 
 app.use(cors(corsOptions));
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: corsOptions 
+});
 
 // parse requests of content-type - application/json
 app.use(express.json({limit: '50mb', extended: true}));

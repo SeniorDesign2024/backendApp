@@ -3,7 +3,8 @@ const config = require("../config/auth.config.js");
 
 const socketAuth = (io) => {
     io.use((socket, next) => {
-        const token = socket.handshake.auth.token;
+        const token = socket.handshake.headers['x-access-token'];
+        console.log('authorizing');
         if (!token) {
             return next(new Error("Authentication error"));
         }
