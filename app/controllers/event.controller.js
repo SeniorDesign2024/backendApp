@@ -122,14 +122,6 @@ exports.listEvents = (req, res) => {
       console.error("Error getting events:", err);
       return res.status(500).json({ error: "Failed to list events" });
     }
-    
-    const { eventId } = req.body.eventId;
-  
-    // Check if event ID is provided
-    if (!eventId) {
-      console.log("Event ID is required");
-      return res.status(400).json({ error: "Event ID is required" });
-    }
 
     // Extract relevant details (startTime, name, id) from each event
     const eventData = events.map((event) => ({
