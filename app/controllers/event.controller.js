@@ -138,7 +138,7 @@ exports.listEvents = (req, res) => {
 exports.eventDetails = (req, res) => {
   console.log("Entered eventDetails function in Event controller");
 
-  const { eventId } = req.body;
+  const { eventId } = req.body.eventId;
 
   // Check if event ID is provided
   if (!eventId) {
