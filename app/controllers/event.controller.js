@@ -2,8 +2,9 @@ const db = require("../models");
 const User = db.user;
 const Role = db.role;
 const Event = db.event;
+const axios = require('axios')
+const http = require('http')
 
-// const Event = require("../models/event.model");
 
 exports.test = (req, res) => {
   console.log("hello");
@@ -13,8 +14,6 @@ exports.test = (req, res) => {
 exports.nextEvent = async (req, res) => {
   retrived_user = req.userId;
   try {
-    //const user = await User.findOne({username: retrived_user}).exec()
-    //const curUserId = user._id;
     const eventList = await Event.findOne({ userId: retrived_user })
       .sort("startTime")
       .exec();
@@ -34,12 +33,42 @@ exports.nextEvent = async (req, res) => {
   }
 };
 
-exports.processEvent = async (req, res) => {
-  rv = Math.floor(Math.random() * 1000);
-  res.status(200).json({
-    attendance: rv,
-  });
-};
+exports.processEvent = async(req, res) => {
+  const eventId = req.body.event_id;
+  const imageData = req.body.image;
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  try {
+    if (!eventId) {
+      throw new Error("No Event Id provided.");
+    }
+    if (!imageData) {
+      throw new Error("No Image provided.");
+    }
+
+    const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData }, config);
+    const count = response.data.count;
+    if (count) {
+      const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
+      //console.log(addCount);
+    }
+    
+    res.status(200).json({
+      "message": "success"
+    });
+
+  } catch (err) {
+    //console.error("Error:", err.message);
+    res.status(500).json({
+      "error": err.message
+    });
+  }
+}
 
 exports.createEvent = (req, res) => {
   console.log("Entered createEvent function in Event controller");
@@ -92,6 +121,14 @@ exports.listEvents = (req, res) => {
     if (err) {
       console.error("Error getting events:", err);
       return res.status(500).json({ error: "Failed to list events" });
+    }
+    
+    const { eventId } = req.body.eventId;
+  
+    // Check if event ID is provided
+    if (!eventId) {
+      console.log("Event ID is required");
+      return res.status(400).json({ error: "Event ID is required" });
     }
 
     // Extract relevant details (startTime, name, id) from each event
