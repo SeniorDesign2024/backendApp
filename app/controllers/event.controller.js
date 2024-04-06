@@ -14,7 +14,8 @@ exports.test = (req, res) => {
 exports.nextEvent = async (req, res) => {
   retrived_user = req.userId;
   try {
-    const eventList = await Event.findOne({ userId: retrived_user })
+    const now = new Date();
+    const eventList = await Event.findOne({ userId: retrived_user, endTime : {$gt : now} })
       .sort("startTime")
       .exec();
     console.log(eventList);
@@ -55,7 +56,7 @@ exports.processEvent = async(req, res) => {
     const count = response.data.count;
     if (count) {
       const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
-      //console.log(addCount);
+      console.log(addCount);
     }
     
     res.status(200).json({
