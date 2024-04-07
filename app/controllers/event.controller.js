@@ -3,7 +3,8 @@ const User = db.user;
 const Role = db.role;
 const Event = db.event;
 const axios = require('axios')
-const http = require('http')
+const http = require('http');
+const { isObjectIdOrHexString } = require("mongoose");
 
 
 exports.test = (req, res) => {
@@ -34,9 +35,10 @@ exports.nextEvent = async (req, res) => {
   }
 };
 
-exports.processEvent = async(req, res) => {
+exports.processEvent = (io) => async(req, res) => {
   const eventId = req.body.event_id;
   const imageData = req.body.image;
+  const userId = req.userId;
 
   const config = {
     headers: {
@@ -55,6 +57,7 @@ exports.processEvent = async(req, res) => {
     const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData }, config);
     const count = response.data.count;
     if (count) {
+      io.to(`user:${userId}`).emit('countReceived', { count });
       const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
       console.log(addCount);
     }

@@ -3,12 +3,19 @@ const express = require("express");
 const cors = require("cors");
 const cookieSession = require('express-session')
 const app = express();
+const socketIo = require('socket.io')
+const http = require('http')
+const socketAuth = require("./app/middlewares/socketAuth");
 
 var corsOptions = {
   origin: "*"
 };
 
 app.use(cors(corsOptions));
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: corsOptions 
+});
 
 // parse requests of content-type - application/json
 app.use(express.json({limit: '50mb', extended: true}));
@@ -53,14 +60,24 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to bezkoder application." });
 });
 
+socketAuth(io);
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.join(`user:${socket.user}`);
+  console.log('Authenticated user:', socket.user);
+  socket.on('disconnect', () => {
+    console.log('A user disconnected')
+  });
+});
+
 // routes
 require("./app/routes/auth.routes")(app);
 require("./app/routes/user.routes")(app);
-require("./app/routes/event.routes")(app); // <- NEW
+require("./app/routes/event.routes")(app, io); // <- NEW
 
 // set port, listen for requests
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
 
