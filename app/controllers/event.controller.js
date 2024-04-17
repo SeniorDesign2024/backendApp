@@ -2,10 +2,9 @@ const db = require("../models");
 const User = db.user;
 const Role = db.role;
 const Event = db.event;
-const axios = require('axios')
-const http = require('http');
+const axios = require("axios");
+const http = require("http");
 const { isObjectIdOrHexString } = require("mongoose");
-
 
 exports.test = (req, res) => {
   console.log("hello");
@@ -16,7 +15,10 @@ exports.nextEvent = async (req, res) => {
   retrived_user = req.userId;
   try {
     const now = new Date();
-    const eventList = await Event.findOne({ userId: retrived_user, endTime : {$gt : now} })
+    const eventList = await Event.findOne({
+      userId: retrived_user,
+      endTime: { $gt: now },
+    })
       .sort("startTime")
       .exec();
     console.log(eventList);
@@ -35,15 +37,15 @@ exports.nextEvent = async (req, res) => {
   }
 };
 
-exports.processEvent = (io) => async(req, res) => {
+exports.processEvent = (io) => async (req, res) => {
   const eventId = req.body.event_id;
   const imageData = req.body.image;
   const userId = req.userId;
 
   const config = {
     headers: {
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   };
 
   try {
@@ -54,136 +56,169 @@ exports.processEvent = (io) => async(req, res) => {
       throw new Error("No Image provided.");
     }
 
-    const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData }, config);
+    const response = await axios.post(
+      "http://127.0.0.1:5000/countingService",
+      { event_id: eventId, image: imageData },
+      config
+    );
     const count = response.data.count;
     if (count) {
-      io.to(`user:${userId}`).emit('countReceived', { count });
-      const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
+      io.to(`user:${userId}`).emit("countReceived", { count });
+      const addCount = await Event.findByIdAndUpdate(
+        eventId,
+        { $push: { attendance: count } },
+        { new: true }
+      );
       console.log(addCount);
     }
-    
-    res.status(200).json({
-      "message": "success"
-    });
 
+    res.status(200).json({
+      message: "success",
+    });
   } catch (err) {
     //console.error("Error:", err.message);
     res.status(500).json({
-      "error": err.message
+      error: err.message,
     });
   }
-}
+};
 
 exports.createEvent = (req, res) => {
-  console.log("Entered createEvent function in Event controller");
+  try {
+    console.log("Entered createEvent function in Event controller");
 
-  // Storing user id
-  const userId = req.userId;
+    // Storing user id
+    const userId = req.userId;
 
-  // Extract details from request body
-  const { name, startTime, endTime, complianceLimit } = req.body;
-  console.log(name);
-  console.log(startTime);
-  console.log(endTime);
-  console.log(complianceLimit);
-
-  // Check if all required fields are provided
-  if (!name || !startTime || !endTime || !complianceLimit) {
-    console.log("Missing required fields");
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  // Create a new event instance with an empty attendance field
-  const event = new Event({
-    name,
-    startTime,
-    endTime,
-    userId,
-    complianceLimit,
-    attendance: [],
-  });
-
-  // Save the event to the database
-  event.save((err, savedEvent) => {
-    if (err) {
-      console.error("Error creating event:", err);
-      return res.status(500).json({ error: "Failed to create event" });
+    // Check if user ID is provided
+    if (!userId) {
+      throw new Error("No User Id provided.");
     }
 
-    // Event created successfully, return event ID
-    res.status(200).json({ eventId: savedEvent._id });
-  });
+    // Extract details from request body
+    const { name, startTime, endTime, complianceLimit } = req.body;
+    console.log(name);
+    console.log(startTime);
+    console.log(endTime);
+    console.log(complianceLimit);
+
+    // Check if all required fields are provided
+    if (!name || !startTime || !endTime || !complianceLimit) {
+      console.log("Missing required fields");
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Create a new event instance with an empty attendance field
+    const event = new Event({
+      name,
+      startTime,
+      endTime,
+      userId,
+      complianceLimit,
+      attendance: [],
+    });
+
+    // Save the event to the database
+    event.save((err, savedEvent) => {
+      if (err) {
+        console.error("Error creating event:", err);
+        return res.status(500).json({ error: "Failed to create event" });
+      }
+
+      // Event created successfully, return event ID
+      res.status(200).json({ eventId: savedEvent._id });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("Error creating event");
+  }
 };
 
 exports.listEvents = (req, res) => {
-  console.log("Entered listEvents function in Event controller");
+  try {
+    console.log("Entered listEvents function in Event controller");
 
-  const userId = req.userId;
+    const userId = req.userId;
 
-  // Fetch all events from the database
-  Event.find({ userId }, (err, events) => {
-    if (err) {
-      console.error("Error getting events:", err);
-      return res.status(500).json({ error: "Failed to list events" });
+    // Check if user ID is provided
+    if (!userId) {
+      throw new Error("No User Id provided.");
     }
 
-    // Extract relevant details (startTime, name, id) from each event
-    const eventData = events.map((event) => ({
-      startTime: event.startTime,
-      name: event.name,
-      eventId: event._id,
-    }));
+    // Fetch all events from the database
+    Event.find({ userId }, (err, events) => {
+      if (err) {
+        console.error("Error getting events:", err);
+        return res.status(500).json({ error: "Failed to list events" });
+      }
 
-    // Send the extracted data in the response
-    res.status(200).json({ data: eventData });
-  });
+      // Extract relevant details (startTime, name, id) from each event
+      const eventData = events.map((event) => ({
+        startTime: event.startTime,
+        name: event.name,
+        eventId: event._id,
+      }));
+
+      // Send the extracted data in the response
+      res.status(200).json({ data: eventData });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("Error listing events");
+  }
 };
 
 exports.eventDetails = (req, res) => {
-  console.log("Entered eventDetails function in Event controller");
+  try {
+    console.log("Entered eventDetails function in Event controller");
 
-  const { eventId } = req.body.eventId;
+    const { eventId } = req.body.eventId;
 
-  // Check if event ID is provided
-  if (!eventId) {
-    console.log("Event ID is required");
-    return res.status(400).json({ error: "Event ID is required" });
-  }
-
-  // Fetch the event details from the database based on the provided event ID
-  Event.findById(eventId, (err, event) => {
-    if (err) {
-      console.error("Error getting event details:", err);
-      return res.status(500).json({ error: "Failed to get event details" });
+    // Check if event ID is provided
+    if (!eventId) {
+      console.log("Event ID is required");
+      return res.status(400).json({ error: "Event ID is required" });
     }
 
-    // Check if event exists
-    if (!event) {
-      console.log("Event not found:");
-      return res.status(404).json({ error: "Event not found" });
-    }
+    // Fetch the event details from the database based on the provided event ID
+    Event.findById(eventId, (err, event) => {
+      if (err) {
+        console.error("Error getting event details:", err);
+        return res.status(500).json({ error: "Failed to get event details" });
+      }
 
-    // Check if the event is registered to the user that created it
-    if (!event.userId.equals(req.userId)) {
-      console.log("Unauthorized access to event details");
-      return res
-        .status(403)
-        .json({ error: "Unauthorized access to event details" });
-    }
+      // Check if event exists
+      if (!event) {
+        console.log("Event not found:");
+        return res.status(404).json({ error: "Event not found" });
+      }
 
-    // Send the event details in the response
-    res.status(200).json({
-      startTime: event.startTime,
-      endTime: event.endTime,
-      complianceLimit: event.complianceLimit,
-      name: event.name,
-      eventId: event._id,
-      attendance: event.attendance,
+      // Check if the event is registered to the user that created it
+      if (!event.userId.equals(req.userId)) {
+        console.log("Unauthorized access to event details");
+        return res
+          .status(403)
+          .json({ error: "Unauthorized access to event details" });
+      }
+
+      // Send the event details in the response
+      res.status(200).json({
+        startTime: event.startTime,
+        endTime: event.endTime,
+        complianceLimit: event.complianceLimit,
+        name: event.name,
+        eventId: event._id,
+        attendance: event.attendance,
+      });
     });
-  });
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("Error getting event details");
+  }
 };
 
 exports.updateEvent = (req, res) => {
+  try {
   console.log("Entered updateEvent function in Event controller");
 
   const { eventId, name, startTime, endTime, complianceLimit, attendance } =
@@ -244,4 +279,8 @@ exports.updateEvent = (req, res) => {
       }
     );
   });
+} catch (err) {
+  console.log(err);
+  res.status(400).send("Error updating event");
+}
 };
