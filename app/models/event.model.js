@@ -8,7 +8,8 @@ const Event = mongoose.model(
     endTime: Date,
     userId: mongoose.Schema.Types.ObjectId,
     attendance: Array,
-    complianceLimit: Number
+    complianceLimit: Number,
+    mlModel: String
   })
 );
 module.exports = Event;

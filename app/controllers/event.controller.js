@@ -25,6 +25,7 @@ exports.nextEvent = async (req, res) => {
         event_id: eventList._id,
         timestamp: eventList.startTime,
         name: eventList.name,
+        modelToUse: eventList.mlModel
       });
     } else {
       res.status(400).send("No event found for the user.");
@@ -39,6 +40,7 @@ exports.processEvent = (io) => async(req, res) => {
   const eventId = req.body.event_id;
   const imageData = req.body.image;
   const userId = req.userId;
+  const modelToUse = req.model;
 
   const config = {
     headers: {
@@ -54,7 +56,7 @@ exports.processEvent = (io) => async(req, res) => {
       throw new Error("No Image provided.");
     }
 
-    const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData }, config);
+    const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData, model: modelToUse }, config);
     const count = response.data.count;
     if (count) {
       io.to(`user:${userId}`).emit('countReceived', { count });
@@ -81,14 +83,15 @@ exports.createEvent = (req, res) => {
   const userId = req.userId;
 
   // Extract details from request body
-  const { name, startTime, endTime, complianceLimit } = req.body;
+  const { name, startTime, endTime, complianceLimit, eventType } = req.body;
   console.log(name);
   console.log(startTime);
   console.log(endTime);
   console.log(complianceLimit);
+  console.log(eventType)
 
   // Check if all required fields are provided
-  if (!name || !startTime || !endTime || !complianceLimit) {
+  if (!name || !startTime || !endTime || !complianceLimit || !eventType) {
     console.log("Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
@@ -101,6 +104,7 @@ exports.createEvent = (req, res) => {
     userId,
     complianceLimit,
     attendance: [],
+    mlModel: eventType
   });
 
   // Save the event to the database
