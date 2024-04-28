@@ -12,7 +12,10 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
 const server = http.createServer(app);
+
+// socket object
 const io = socketIo(server, {
   cors: corsOptions 
 });
@@ -60,13 +63,13 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to bezkoder application." });
 });
 
+// handling a socket connection
 socketAuth(io);
 io.on('connection', (socket) => {
-  console.log('A user connected');
   socket.join(`user:${socket.user}`);
-  console.log('Authenticated user:', socket.user);
+  console.log('A user connected via socket');
   socket.on('disconnect', () => {
-    console.log('A user disconnected')
+    console.log('A socket user disconnected')
   });
 });
 

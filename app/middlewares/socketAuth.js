@@ -1,6 +1,10 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config.js");
 
+/**
+ * Middleware for authorizing a user requesting for a socket connection
+ * @param {Object} io The socket object
+ */
 const socketAuth = (io) => {
     io.use((socket, next) => {
         const token = socket.handshake.headers['x-access-token'];

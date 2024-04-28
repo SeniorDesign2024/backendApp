@@ -4,6 +4,8 @@ const Role = db.role;
 const Event = db.event;
 const axios = require('axios')
 const http = require('http');
+const NodeCache = require('node-cache');
+const eventCache = new NodeCache();
 const { isObjectIdOrHexString } = require("mongoose");
 
 
@@ -12,6 +14,12 @@ exports.test = (req, res) => {
   res.json({ message: "Event Test" });
 };
 
+/**
+ * Retrieves the upcoming event for the user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {Promise<void>} A promise that is resolved after the upcoming event is retrieved.
+ */
 exports.nextEvent = async (req, res) => {
   retrived_user = req.userId;
   try {
@@ -19,7 +27,6 @@ exports.nextEvent = async (req, res) => {
     const eventList = await Event.findOne({ userId: retrived_user, endTime : {$gt : now} })
       .sort("startTime")
       .exec();
-    console.log(eventList);
     if (eventList) {
       res.status(200).json({
         event_id: eventList._id,
@@ -31,16 +38,23 @@ exports.nextEvent = async (req, res) => {
       res.status(400).send("No event found for the user.");
     }
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error processing the user");
   }
 };
 
+/**
+ * Forward crowd counting requests to the crowd Counting server, forward the calculated count to the 
+ * front-end in real-time using websocket, and stores the count to the database.
+ * @param {Object} req The request object (eventId, image)
+ * @param {Object} res The response object
+ * @return {Promise<void>} A promise that is resolved after the count is received from the counting server.
+ */
 exports.processEvent = (io) => async(req, res) => {
   const eventId = req.body.event_id;
   const imageData = req.body.image;
   const userId = req.userId;
-  const modelToUse = req.model;
+  let eventDetails = eventCache.get(eventId);
+  let modelToUse = ""
 
   const config = {
     headers: {
@@ -56,12 +70,21 @@ exports.processEvent = (io) => async(req, res) => {
       throw new Error("No Image provided.");
     }
 
+    if (eventDetails) {
+      modelToUse = eventDetails.mlModel;
+    }
+    if (!eventDetails) {
+      console.log("Setting Cache");
+      eventDetails = await Event.findById(eventId);
+      modelToUse = eventDetails.mlModel;
+      eventCache.set(eventId, eventDetails, 3600);
+    }
+
     const response = await axios.post('http://127.0.0.1:5000/countingService', { event_id: eventId, image: imageData, model: modelToUse }, config);
     const count = response.data.count;
     if (count) {
       io.to(`user:${userId}`).emit('countReceived', { count });
       const addCount = await Event.findByIdAndUpdate(eventId, { $push: { attendance: count } }, { new: true });
-      console.log(addCount);
     }
     
     res.status(200).json({
@@ -69,7 +92,6 @@ exports.processEvent = (io) => async(req, res) => {
     });
 
   } catch (err) {
-    //console.error("Error:", err.message);
     res.status(500).json({
       "error": err.message
     });
