@@ -301,3 +301,14 @@ exports.updateEvent = (req, res) => {
   res.status(400).send("Error updating event");
 }
 };
+
+exports.updateCrowdDensity = async(socket, data) => {
+  const eventId = data.eventId;
+  const density = data.density;
+  let eventDetails = eventCache.get(eventId);
+  if (eventDetails) {
+    eventDetails.mlModel = density;
+    eventCache.set(eventId, eventDetails, 3600);
+    Event.findByIdAndUpdate(eventId, { mlModel: density }, { new: true });
+  }
+};
