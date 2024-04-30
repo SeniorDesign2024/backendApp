@@ -2,6 +2,13 @@ const db = require("../models");
 const ROLES = db.ROLES;
 const User = db.user;
 
+/**
+ * Middleware to check for duplicate username or email during user signup
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @param {Function} next The next middleware function
+ * @return {void} Returns a JSON response indicating duplicate username or email if found, otherwise calls the next middleware function
+ */
 checkDuplicateUsernameOrEmail = (req, res, next) => {
   // Username
   User.findOne({
@@ -36,6 +43,13 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
   });
 };
 
+/**
+ * Middleware to check if provided roles exist
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @param {Function} next The next middleware function
+ * @return {void} Returns a JSON response indicating non-existent roles if found, otherwise calls the next middleware function
+ */
 checkRolesExisted = (req, res, next) => {
   if (req.body.roles) {
     for (let i = 0; i < req.body.roles.length; i++) {
