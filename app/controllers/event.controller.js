@@ -99,9 +99,14 @@ exports.processEvent = (io) => async(req, res) => {
   }
 };
 
+/**
+ * Creates a new event
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response with the newly created event ID
+ */
 exports.createEvent = (req, res) => {
   try {
-    console.log("Entered createEvent function in Event controller");
 
   // Storing user id
   const userId = req.userId;
@@ -113,14 +118,9 @@ exports.createEvent = (req, res) => {
 
   // Extract details from request body
   const { name, startTime, endTime, complianceLimit, eventType } = req.body;
-  console.log(name);
-  console.log(startTime);
-  console.log(endTime);
-  console.log(complianceLimit);
 
   // Check if all required fields are provided
   if (!name || !startTime || !endTime || !complianceLimit || !eventType) {
-    console.log("Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -146,14 +146,18 @@ exports.createEvent = (req, res) => {
       res.status(200).json({ eventId: savedEvent._id });
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error creating event");
   }
 };
 
+/**
+ * Lists all events associated with a user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response with the list of events
+ */
 exports.listEvents = (req, res) => {
   try {
-    console.log("Entered listEvents function in Event controller");
 
     const userId = req.userId;
 
@@ -180,20 +184,23 @@ exports.listEvents = (req, res) => {
       res.status(200).json({ data: eventData });
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error listing events");
   }
 };
 
+/**
+ * Retrieves details of a specific event
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response with the event details
+ */
 exports.eventDetails = (req, res) => {
   try {
-    console.log("Entered eventDetails function in Event controller");
 
     const { eventId } = req.body.eventId;
 
     // Check if event ID is provided
     if (!eventId) {
-      console.log("Event ID is required");
       return res.status(400).json({ error: "Event ID is required" });
     }
 
@@ -206,13 +213,11 @@ exports.eventDetails = (req, res) => {
 
       // Check if event exists
       if (!event) {
-        console.log("Event not found:");
         return res.status(404).json({ error: "Event not found" });
       }
 
       // Check if the event is registered to the user that created it
       if (!event.userId.equals(req.userId)) {
-        console.log("Unauthorized access to event details");
         return res
           .status(403)
           .json({ error: "Unauthorized access to event details" });
@@ -229,14 +234,18 @@ exports.eventDetails = (req, res) => {
       });
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error getting event details");
   }
 };
 
+/**
+ * Updates details of an existing event
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response indicating success or failure of the update operation
+ */
 exports.updateEvent = (req, res) => {
   try {
-  console.log("Entered updateEvent function in Event controller");
 
   const { eventId, name, startTime, endTime, complianceLimit, attendance } =
     req.body;
@@ -250,7 +259,6 @@ exports.updateEvent = (req, res) => {
     !complianceLimit ||
     !attendance
   ) {
-    console.log("Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -262,13 +270,11 @@ exports.updateEvent = (req, res) => {
     }
 
     if (!event) {
-      console.log("Event not found");
       return res.status(404).json({ error: "Event not found" });
     }
 
     // Check if the event is registered to the user
     if (!event.userId.equals(req.userId)) {
-      console.log("Unauthorized access to update event");
       return res
         .status(403)
         .json({ error: "Unauthorized access to update event" });
@@ -287,7 +293,6 @@ exports.updateEvent = (req, res) => {
 
         // Check if event exists
         if (!updatedEvent) {
-          console.log("Event not found");
           return res.status(404).json({ error: "Event not found" });
         }
 
@@ -297,7 +302,6 @@ exports.updateEvent = (req, res) => {
     );
   });
 } catch (err) {
-  console.log(err);
   res.status(400).send("Error updating event");
 }
 };

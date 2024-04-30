@@ -17,9 +17,15 @@ exports.moderatorBoard = (req, res) => {
   res.status(200).send("Moderator Content.");
 };
 
+/**
+ * Retrieves details of the authenticated user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response with the user details
+ */
 exports.userDetails = (req, res) => {
   try {
-    console.log("Entered UserDetails function in User controller");
+
     // Retrieve user ID from the request
     const userId = req.userId;
 
@@ -32,7 +38,6 @@ exports.userDetails = (req, res) => {
 
       // Check if user exists
       if (!user) {
-        console.log("User not found");
         return res.status(404).json({ error: "User not found" });
       }
 
@@ -42,14 +47,19 @@ exports.userDetails = (req, res) => {
         .json({ userid: userId, email: user.email, username: user.username });
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error getting user details");
   }
 };
 
+/**
+ * Updates details of the authenticated user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response indicating success or failure of the user update operation
+ */
 exports.updateUser = (req, res) => {
   try {
-    console.log("Entered updateUser function in User controller");
+
     // Retrieve user ID from the request
     const userId = req.userId;
 
@@ -58,7 +68,6 @@ exports.updateUser = (req, res) => {
 
     // Check if both email and username are provided
     if (!email || !username) {
-      console.log("Email and username are required");
       return res.status(400).json({ error: "Email and username are required" });
     }
 
@@ -71,7 +80,6 @@ exports.updateUser = (req, res) => {
 
       // If the username is taken by another user, return an error
       if (existingUser && existingUser._id.toString() !== userId) {
-        console.log("Username is already taken");
         return res.status(400).json({ error: "Username is already taken" });
       }
 
@@ -88,7 +96,6 @@ exports.updateUser = (req, res) => {
 
           // Check if user exists
           if (!updatedUser) {
-            console.log("User not found");
             return res.status(404).json({ error: "User not found" });
           }
 
@@ -102,7 +109,6 @@ exports.updateUser = (req, res) => {
       );
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error updating user");
   }
 };

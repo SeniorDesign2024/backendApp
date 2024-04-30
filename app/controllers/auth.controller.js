@@ -6,6 +6,12 @@ const Role = db.role;
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 
+/**
+ * Registers a new user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response indicating success or failure of the registration
+ */
 exports.signup = (req, res) => {
   const user = new User({
     username: req.body.username,
@@ -62,8 +68,13 @@ exports.signup = (req, res) => {
   });
 };
 
+/**
+ * Authenticates a user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response with user details and access token upon successful authentication
+ */
 exports.signin = (req, res) => {
-  console.log(req.body);
   User.findOne({
     username: req.body.username,
   })
@@ -112,17 +123,27 @@ exports.signin = (req, res) => {
     });
 };
 
+/**
+ * Logs out a user by clearing the session token
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response indicating successful logout
+ */
 exports.logout = (req, res) => {
   req.session.token = null; // Clear the session token
   res.status(200).send({ message: "Logout successful" }); // Send a response
 };
 
+/**
+ * Resets the password for a user
+ * @param {Object} req The request object
+ * @param {Object} res The response object
+ * @return {void} Returns a JSON response indicating success or failure of the password reset
+ */
 exports.resetPassword = (req, res) => {
   try {
-    console.log("Entered resetPassword function in auth controller");
-    // Validate req.body
+
     if (!req.body.oldPassword || !req.body.newPassword) {
-      console.log("Both old password and new password are required.");
       return res
         .status(400)
         .send({ error: "Both old password and new password are required." });
@@ -135,7 +156,6 @@ exports.resetPassword = (req, res) => {
       }
 
       if (!user) {
-        console.log("User not found.");
         return res.status(404).send({ error: "User not found." });
       }
 
@@ -144,7 +164,6 @@ exports.resetPassword = (req, res) => {
         user.password
       );
       if (!passwordIsValid) {
-        console.log("Invalid old password.");
         return res.status(400).send({ error: "Invalid old password." });
       }
 
@@ -177,7 +196,6 @@ exports.resetPassword = (req, res) => {
       });
     });
   } catch (err) {
-    console.log(err);
     res.status(400).send("Error resetting password");
   }
 };
