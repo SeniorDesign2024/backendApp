@@ -6,6 +6,7 @@ const app = express();
 const socketIo = require('socket.io')
 const http = require('http')
 const socketAuth = require("./app/middlewares/socketAuth");
+const { updateCrowdDensity } = require('./app/controllers/event.controller')
 
 var corsOptions = {
   origin: "*"
@@ -68,6 +69,9 @@ socketAuth(io);
 io.on('connection', (socket) => {
   socket.join(`user:${socket.user}`);
   console.log('A user connected via socket');
+  socket.on('crowdDensity', (data) => {
+    updateCrowdDensity(socket, data);
+  });
   socket.on('disconnect', () => {
     console.log('A socket user disconnected')
   });

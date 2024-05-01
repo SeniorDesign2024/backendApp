@@ -305,3 +305,22 @@ exports.updateEvent = (req, res) => {
   res.status(400).send("Error updating event");
 }
 };
+
+exports.updateCrowdDensity = async(socket, data) => {
+  const eventId = data.eventId;
+  console.log(typeof(eventId))
+  const density = data.density;
+  let eventDetails = eventCache.get(eventId);
+  console.log(eventDetails);
+  if (eventDetails) {
+    console.log("Updating mlModel");
+    eventDetails.mlModel = density;
+    eventCache.set(eventId, eventDetails, 3600);
+    Event.findByIdAndUpdate(eventId, { mlModel: density }, { new: true });
+  } else {
+    console.log("Setting Cache");
+    eventDetails = await Event.findById(eventId);
+    modelToUse = eventDetails.mlModel;
+    eventCache.set(eventId, eventDetails, 3600);
+  }
+};
