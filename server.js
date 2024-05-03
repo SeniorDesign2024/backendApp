@@ -70,7 +70,7 @@ io.on('connection', (socket) => {
   socket.join(`user:${socket.user}`);
   console.log('A user connected via socket');
   socket.on('crowdDensity', (data) => {
-    updateCrowdDensity(socket, data);
+    updateCrowdDensity(data);
   });
   socket.on('disconnect', () => {
     console.log('A socket user disconnected')

@@ -7,6 +7,7 @@ const http = require('http');
 const NodeCache = require('node-cache');
 const eventCache = new NodeCache();
 const { isObjectIdOrHexString } = require("mongoose");
+const mongoose = require('mongoose');
 
 exports.test = (req, res) => {
   console.log("hello");
@@ -103,7 +104,7 @@ exports.processEvent = (io) => async(req, res) => {
  * Creates a new event
  * @param {Object} req The request object
  * @param {Object} res The response object
- * @return {void} Returns a JSON response with the newly created event ID
+ * @return {JSON} Returns a JSON response with the newly created event ID
  */
 exports.createEvent = (req, res) => {
   try {
@@ -154,7 +155,7 @@ exports.createEvent = (req, res) => {
  * Lists all events associated with a user
  * @param {Object} req The request object
  * @param {Object} res The response object
- * @return {void} Returns a JSON response with the list of events
+ * @return {JSON} Returns a JSON response with the list of events
  */
 exports.listEvents = (req, res) => {
   try {
@@ -192,7 +193,7 @@ exports.listEvents = (req, res) => {
  * Retrieves details of a specific event
  * @param {Object} req The request object
  * @param {Object} res The response object
- * @return {void} Returns a JSON response with the event details
+ * @return {JSON} Returns a JSON response with the event details
  */
 exports.eventDetails = (req, res) => {
   try {
@@ -242,7 +243,7 @@ exports.eventDetails = (req, res) => {
  * Updates details of an existing event
  * @param {Object} req The request object
  * @param {Object} res The response object
- * @return {void} Returns a JSON response indicating success or failure of the update operation
+ * @return {JSON} Returns a JSON response indicating success or failure of the update operation
  */
 exports.updateEvent = (req, res) => {
   try {
@@ -306,21 +307,37 @@ exports.updateEvent = (req, res) => {
 }
 };
 
-exports.updateCrowdDensity = async(socket, data) => {
+/**
+ * Updates crowd density aka machine learning model type to use for 
+ * crowd counting
+ * @param {*} data a JSON object containing the event id and density type
+ * @return {void}
+ */
+exports.updateCrowdDensity = async(data) => {
+  /* Retrieve the event id and density from the JSON object 'data' */
   const eventId = data.eventId;
-  console.log(typeof(eventId))
+  console.log(eventId)
+  const eventIdObj = mongoose.Types.ObjectId(eventId)
   const density = data.density;
-  let eventDetails = eventCache.get(eventId);
-  console.log(eventDetails);
+  console.log(density)
+
+  /* Get event details from the cache using the event id.
+   * If found, then update the mlModel property of the event
+   * in the database. Else, get the event details from the 
+   * database directly, update the mlModel property and store 
+   * in the cache.
+   */
+  let eventDetails = await eventCache.get(eventId);
   if (eventDetails) {
     console.log("Updating mlModel");
     eventDetails.mlModel = density;
     eventCache.set(eventId, eventDetails, 3600);
-    Event.findByIdAndUpdate(eventId, { mlModel: density }, { new: true });
+    await Event.findByIdAndUpdate(eventIdObj, { mlModel: density }, { new: true });
   } else {
     console.log("Setting Cache");
     eventDetails = await Event.findById(eventId);
-    modelToUse = eventDetails.mlModel;
+    eventDetails.mlModel = density;
     eventCache.set(eventId, eventDetails, 3600);
+    await Event.findByIdAndUpdate(eventIdObj, { mlModel: density }, { new: true });
   }
 };
