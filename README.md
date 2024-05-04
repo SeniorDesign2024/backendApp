@@ -15,10 +15,11 @@ To successfully setup the backend locally, please install the following:
 First, `git clone` this repository to access all the code.   
 Then, to install all the dependencies run `npm install`.
 
-Also, create `.env` file. It will contain the the `DBCONFIG=` parameter. The value for it can be accessed using your MongoDB account.   
-
-## Configuration
-`fix me`
+Second, you will need a `.env` file. The repository already 
+contains a `.env` file that is connected to a database that 
+was used to build this backend server. If you would like to 
+use your own account, replace the `DBCONFIG` value with your 
+own config string provided by your MongoDB account. 
 
 ## Running the application
 To run the application, use `npm start`.
